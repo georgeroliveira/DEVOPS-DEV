@@ -1,0 +1,27 @@
+name: CD - Continuous Deployment
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: \${{ secrets.HOST_SERVER }}
+          username: ubuntu
+          key: \${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/taskmanager
+            echo "[CD] Atualizando containers..."
+            docker compose pull
+            docker compose up -d --remove-orphans
+            echo "[CD] Deploy finalizado com sucesso!"
