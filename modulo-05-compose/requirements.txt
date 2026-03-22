@@ -1,5 +1,0 @@
-Flask
-psycopg2-binary
-redis
-python-dotenv
-Werkzeug
