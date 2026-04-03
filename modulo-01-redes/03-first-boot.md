@@ -1,278 +1,377 @@
-# 🖥️ Setup 02 — Criando a VM Ubuntu Server
+# 🔧 Setup 03 — Primeiro Boot e Configuração da VM
 
-> **Execute no seu PC (Windows, Mac ou Linux) — não na VM.**
+> **Execute diretamente na VM — pelo console do VirtualBox.**
+> Ainda não temos SSH configurado com chave, então acesse pela tela da VM por enquanto.
 
 ---
 
 ## 🎯 Objetivo
 
-Baixar o Ubuntu Server 24.04 LTS e criar a VM que será usada durante todo o curso.
+Configurar a VM após a instalação: atualizar o sistema, instalar pacotes essenciais, configurar SSH por chave e preparar o ambiente para o VS Code Remote.
 
 ---
 
-## 📥 Download da ISO
+## 🔹 1. Primeiro login
 
-Acesse o site oficial e baixe a ISO:
+Na tela do VirtualBox, faça login com o usuário criado durante a instalação:
 
 ```
-https://ubuntu.com/download/server
+devops-vm login: devops
+Password: (senha que você definiu)
 ```
 
-Clique em **Download Ubuntu Server 24.04 LTS**.
+Você verá o prompt:
 
-> Arquivo: `ubuntu-24.04.x-live-server-amd64.iso` (~2.5 GB)
-> Aguarde o download completo antes de prosseguir.
-
----
-
-## 🆕 Criar a VM no VirtualBox
-
-### 1. Abrir o assistente de criação
-
-No VirtualBox, clique em **New** (ou `Ctrl + N`).
+```
+devops@devops-vm:~$
+```
 
 ---
 
-### 2. Nome e sistema operacional
+## 🔹 2. Verificar o IP da VM
 
-| Campo             | Valor                        |
-|-------------------|------------------------------|
-| Name              | `devops-vm`                  |
-| Folder            | Deixe o padrão               |
-| ISO Image         | Selecione a ISO baixada       |
-| Type              | Linux                        |
-| Version           | Ubuntu (64-bit)              |
+Confirme que os dois adaptadores de rede estão ativos:
 
-Marque a opção **Skip Unattended Installation**.
+```bash
+ip a
+```
 
-> Isso garante que você vai passar pela instalação manualmente,
-> aprendendo o processo real de configuração de um servidor.
+**O que verificar:**
 
-Clique em **Next**.
+```
+enp0s3   → IP via DHCP (NAT) — acesso à internet
+enp0s8   → 192.168.56.10     — IP fixo Host-Only
+```
 
----
-
-### 3. Hardware
-
-| Recurso | Valor recomendado | Mínimo |
-|---------|-------------------|--------|
-| RAM     | 2048 MB (2 GB)    | 1024 MB |
-| CPUs    | 2                 | 1      |
-
-Clique em **Next**.
+> Se `enp0s8` não aparecer com `192.168.56.10`, a configuração de rede durante
+> a instalação não foi salva corretamente. Veja o troubleshooting no final.
 
 ---
 
-### 4. Disco
+## 🔹 3. Testar acesso à internet
 
-| Campo       | Valor       |
-|-------------|-------------|
-| Tipo        | VDI         |
-| Alocação    | Dynamically allocated |
-| Tamanho     | 20 GB       |
+```bash
+ping -c 4 google.com
+```
 
-Clique em **Next** → **Finish**.
+**Resultado esperado:** `0% packet loss`
 
----
-
-## 🌐 Configurar as interfaces de rede
-
-A VM precisa de **duas interfaces de rede**:
-
-| Adaptador | Tipo      | Para quê                              |
-|-----------|-----------|---------------------------------------|
-| 1         | NAT       | Acesso à internet (apt, git, docker)  |
-| 2         | Host-Only | IP fixo para SSH e acesso às apps     |
-
-### Configurar Adaptador 1 (NAT)
-
-1. Selecione a VM `devops-vm` → clique em **Settings**
-2. Vá em **Network → Adapter 1**
-3. Marque **Enable Network Adapter**
-4. Attached to: **NAT**
-5. Clique em **OK**
-
-### Criar a rede Host-Only (se não existir)
-
-1. No menu do VirtualBox: **File → Tools → Network Manager**
-2. Clique em **Create** (ícone +)
-3. Confirme que a rede `vboxnet0` foi criada com:
-   - IPv4: `192.168.56.1`
-   - Mask: `255.255.255.0`
-   - DHCP: **desabilitado**
-4. Feche o Network Manager
-
-### Configurar Adaptador 2 (Host-Only)
-
-1. Volte em **Settings → Network → Adapter 2**
-2. Marque **Enable Network Adapter**
-3. Attached to: **Host-Only Adapter**
-4. Name: **vboxnet0**
-5. Clique em **OK**
+> Se falhar, o adaptador NAT não está funcionando. Verifique as configurações
+> de rede da VM no VirtualBox.
 
 ---
 
-## 🚀 Iniciar a instalação
+## 🔹 4. Atualizar o sistema
 
-### 1. Iniciar a VM
+```bash
+sudo apt update && sudo apt upgrade -y
+```
 
-Selecione `devops-vm` e clique em **Start**.
-
-A VM vai iniciar a partir da ISO do Ubuntu.
-
----
-
-### 2. Tela de boot
-
-Selecione **Try or Install Ubuntu Server** e pressione `Enter`.
-
-Aguarde o carregamento (pode levar 1-2 minutos).
+> Isso pode levar alguns minutos dependendo da sua internet.
+> É uma boa prática sempre atualizar o sistema após a instalação.
 
 ---
 
-### 3. Idioma
+## 🔹 5. Instalar pacotes essenciais
 
-Selecione **English** e pressione `Enter`.
+```bash
+sudo apt install -y \
+    curl \
+    wget \
+    git \
+    unzip \
+    htop \
+    tree \
+    net-tools
+```
 
-> Mantenha inglês — todos os comandos do curso usam saídas em inglês,
-> o que facilita pesquisar erros e documentação.
+**Para que serve cada um:**
 
----
-
-### 4. Atualização do instalador
-
-Se aparecer a mensagem **"Installer update available"**:
-
-Selecione **Continue without updating** e pressione `Enter`.
-
----
-
-### 5. Layout do teclado
-
-| Campo    | Valor          |
-|----------|----------------|
-| Layout   | Portuguese (Brazil) ou English (US) |
-| Variant  | Deixe o padrão |
-
-Selecione **Done** e pressione `Enter`.
-
----
-
-### 6. Tipo de instalação
-
-Selecione **Ubuntu Server** (opção padrão) e pressione `Enter`.
+| Pacote     | Uso no curso                              |
+|------------|-------------------------------------------|
+| curl       | Testar APIs e health checks               |
+| wget       | Baixar arquivos                           |
+| git        | Versionamento de código (módulo 03)       |
+| unzip      | Descompactar arquivos                     |
+| htop       | Monitorar processos e recursos            |
+| tree       | Visualizar estrutura de diretórios        |
+| net-tools  | Comandos de rede (ifconfig, netstat)      |
 
 ---
 
-### 7. Configuração de rede
+## 🔹 6. Verificar o SSH
 
-O instalador vai detectar as duas interfaces automaticamente:
+O OpenSSH Server foi instalado durante a configuração do Ubuntu. Confirme que está rodando:
 
-- `enp0s3` → NAT (deve ter recebido IP via DHCP)
-- `enp0s8` → Host-Only (vamos configurar IP fixo)
+```bash
+sudo systemctl status ssh
+```
 
-**Configurar IP fixo no enp0s8:**
+**Resultado esperado:**
 
-1. Selecione `enp0s8` → **Edit IPv4**
-2. Method: **Manual**
-3. Preencha:
+```
+● ssh.service - OpenBSD Secure Shell server
+     Active: active (running)
+```
 
-| Campo   | Valor             |
-|---------|-------------------|
-| Subnet  | `192.168.56.0/24` |
-| Address | `192.168.56.10`   |
-| Gateway | Deixe vazio       |
-| DNS     | Deixe vazio       |
+Se não estiver rodando:
 
-4. Selecione **Save** → **Done**
-
-> O IP `192.168.56.10` será o endereço fixo da sua VM durante todo o curso.
+```bash
+sudo systemctl start ssh
+sudo systemctl enable ssh
+```
 
 ---
 
-### 8. Proxy
+## 🔹 7. Configurar o firewall
 
-Deixe vazio e selecione **Done**.
+Ative o firewall e libere apenas as portas necessárias:
 
----
+```bash
+# Ativar UFW
+sudo ufw enable
 
-### 9. Mirror do Ubuntu
+# Liberar SSH (obrigatório — sem isso você perde o acesso remoto)
+sudo ufw allow 22/tcp
 
-Deixe o padrão e selecione **Done**.
+# Verificar regras
+sudo ufw status
+```
 
-> O instalador vai testar a conexão com o mirror. Aguarde.
+**Resultado esperado:**
 
----
+```
+Status: active
 
-### 10. Disco
+To                         Action      From
+--                         ------      ----
+22/tcp                     ALLOW       Anywhere
+```
 
-Selecione **Use an entire disk** → **Done** → **Continue**.
-
-> Isso vai usar todo o disco virtual de 20 GB criado anteriormente.
-
----
-
-### 11. Perfil do usuário
-
-| Campo           | Valor              |
-|-----------------|--------------------|
-| Your name       | `DevOps`           |
-| Server name     | `devops-vm`        |
-| Username        | `devops`           |
-| Password        | Escolha uma senha  |
-| Confirm password| Repita a senha     |
-
-Selecione **Done**.
-
-> Anote a senha — você vai precisar dela no primeiro acesso.
+> As outras portas serão liberadas conforme o curso avançar.
+> No módulo de redes você vai aprender a liberar portas específicas.
 
 ---
 
-### 12. Ubuntu Pro
+## 🔹 8. Configurar SSH por chave — no seu PC
 
-Selecione **Skip for now** → **Continue**.
+Agora saia do console do VirtualBox e abra o terminal **do seu PC**.
+
+### Gerar par de chaves (se ainda não tiver)
+
+**Linux / macOS:**
+```bash
+ssh-keygen -t ed25519 -C "devops-bootcamp"
+```
+
+**Windows (PowerShell):**
+```powershell
+ssh-keygen -t ed25519 -C "devops-bootcamp"
+```
+
+Pressione `Enter` em todas as perguntas (sem senha na chave, para facilitar o uso com VS Code).
+
+**Onde ficam as chaves:**
+
+```
+~/.ssh/id_ed25519      ← chave privada (nunca compartilhe)
+~/.ssh/id_ed25519.pub  ← chave pública (vai para a VM)
+```
 
 ---
 
-### 13. SSH
+### Copiar a chave pública para a VM
 
-Marque **Install OpenSSH server** (pressione `Space` para marcar).
+**Linux / macOS:**
+```bash
+ssh-copy-id devops@192.168.56.10
+```
 
-Selecione **Done**.
+Digite a senha do usuário `devops` quando solicitado. Isso é a última vez que você vai precisar da senha.
 
-> Isso habilita o acesso SSH à VM — essencial para o VS Code Remote.
+**Windows (PowerShell):**
+```powershell
+type $env:USERPROFILE\.ssh\id_ed25519.pub | ssh devops@192.168.56.10 "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
+```
 
 ---
 
-### 14. Snaps adicionais
+### Testar conexão por chave
 
-Não selecione nada. Selecione **Done**.
+```bash
+ssh devops@192.168.56.10
+```
+
+**Resultado esperado:** login sem pedir senha.
+
+```
+devops@devops-vm:~$
+```
 
 ---
 
-### 15. Instalação
+## 🔹 9. Configurar alias SSH no seu PC
 
-Aguarde a instalação concluir. Pode levar 5-15 minutos dependendo da sua internet.
+Crie o arquivo de configuração SSH para não precisar digitar o IP toda vez:
 
-Quando aparecer **"Installation complete!"**, selecione **Reboot Now**.
+**Linux / macOS** — edite `~/.ssh/config`:
+```bash
+nano ~/.ssh/config
+```
 
-> O instalador vai pedir para remover a mídia de instalação.
-> No VirtualBox isso acontece automaticamente. Pressione `Enter`.
+**Windows** — edite `C:\Users\SeuUsuario\.ssh\config` no Notepad ou VS Code.
+
+**Conteúdo:**
+```
+Host devops-vm
+    HostName 192.168.56.10
+    User devops
+    IdentityFile ~/.ssh/id_ed25519
+```
+
+Salve o arquivo.
+
+**Testar o alias:**
+
+```bash
+ssh devops-vm
+```
+
+Deve conectar diretamente, sem IP e sem senha.
+
+---
+
+## 🔹 10. Configurações finais na VM
+
+Conectado via SSH, execute:
+
+```bash
+# Configurar timezone para São Paulo
+sudo timedatectl set-timezone America/Sao_Paulo
+
+# Confirmar timezone
+timedatectl
+
+# Configurar hostname
+sudo hostnamectl set-hostname devops-vm
+
+# Confirmar
+hostname
+```
+
+---
+
+## 🔹 11. Snapshot da VM (recomendado)
+
+Antes de continuar, tire um snapshot da VM no estado atual. Isso permite voltar a este ponto se algo der errado nos próximos módulos.
+
+No VirtualBox:
+
+1. Selecione a VM `devops-vm`
+2. Menu **Machine → Take Snapshot**
+3. Nome: `setup-inicial`
+4. Clique em **OK**
+
+> Dica: tire um snapshot antes de cada módulo. Se algo quebrar, você volta ao estado anterior em segundos.
 
 ---
 
 ## ✅ Checklist
 
-- [ ] ISO do Ubuntu 24.04 baixada
-- [ ] VM criada com 2 GB RAM e 20 GB disco
-- [ ] Adaptador 1 configurado como NAT
-- [ ] Adaptador 2 configurado como Host-Only (192.168.56.10)
-- [ ] Ubuntu Server instalado com usuário `devops`
-- [ ] OpenSSH Server instalado durante a instalação
-- [ ] VM reiniciada após a instalação
+- [ ] Login realizado com usuário `devops`
+- [ ] IP `192.168.56.10` confirmado em `enp0s8`
+- [ ] Internet funcionando (`ping google.com`)
+- [ ] Sistema atualizado (`apt update && upgrade`)
+- [ ] Pacotes essenciais instalados
+- [ ] SSH rodando (`systemctl status ssh`)
+- [ ] Firewall ativo com porta 22 liberada
+- [ ] Par de chaves SSH gerado no PC
+- [ ] Chave pública copiada para a VM
+- [ ] Login SSH por chave funcionando (sem senha)
+- [ ] Alias `devops-vm` configurado no `~/.ssh/config`
+- [ ] Timezone configurado para São Paulo
+- [ ] Snapshot `setup-inicial` criado
+
+---
+
+## 🆘 Troubleshooting
+
+### IP 192.168.56.10 não aparece
+
+A configuração de rede estática não foi salva durante a instalação. Corrija manualmente:
+
+```bash
+sudo nano /etc/netplan/00-installer-config.yaml
+```
+
+Adicione a configuração da interface Host-Only:
+
+```yaml
+network:
+  ethernets:
+    enp0s3:
+      dhcp4: true
+    enp0s8:
+      addresses:
+        - 192.168.56.10/24
+  version: 2
+```
+
+Aplique:
+
+```bash
+sudo netplan apply
+ip a
+```
+
+---
+
+### SSH: Connection refused
+
+```bash
+# Verificar se o serviço está rodando
+sudo systemctl status ssh
+
+# Iniciar se necessário
+sudo systemctl start ssh
+sudo systemctl enable ssh
+
+# Verificar se a porta está aberta
+sudo ufw status
+sudo ufw allow 22/tcp
+```
+
+---
+
+### Permission denied (publickey)
+
+A chave pública não foi copiada corretamente para a VM.
+
+Verifique na VM:
+
+```bash
+cat ~/.ssh/authorized_keys
+```
+
+Deve conter o conteúdo da sua chave pública (`~/.ssh/id_ed25519.pub`).
+
+Se estiver vazio, copie manualmente:
+
+```bash
+# Na VM, crie o diretório e arquivo
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+touch ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+
+# No seu PC, exiba a chave pública
+cat ~/.ssh/id_ed25519.pub
+# Copie o conteúdo e cole na VM:
+echo "cole-aqui-o-conteudo-da-chave-publica" >> ~/.ssh/authorized_keys
+```
 
 ---
 
 ## ➡️ Próximo passo
 
-👉 Abra `03-first-boot.md` para configurar a VM após o primeiro boot.
+👉 Abra `04-vscode-remote.md` para conectar o VS Code na VM.

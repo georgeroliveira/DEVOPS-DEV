@@ -27,12 +27,12 @@ Tudo que você aprender aqui funciona da mesma forma em qualquer cloud.
 
 ## 📋 O que você vai instalar
 
-| Etapa | Arquivo                  | O que faz                                      |
-|-------|--------------------------|------------------------------------------------|
-| 1     | `01-virtualbox.md`       | Instala o VirtualBox no seu PC                 |
-| 2     | `02-ubuntu-server.md`    | Baixa a ISO e cria a VM com as configs do curso |
-| 3     | `03-first-boot.md`       | Primeiro boot, usuário, SSH e hardening básico  |
-| 4     | `04-vscode-remote.md`    | Conecta o VS Code na VM via Remote SSH          |
+| Etapa | Arquivo                    | O que faz                                       |
+|-------|----------------------------|-------------------------------------------------|
+| 1     | `00-setup-virtualbox.md`   | Instala o VirtualBox no seu PC                  |
+| 2     | `02-ubuntu-server.md`      | Baixa a ISO e cria a VM com as configs do curso  |
+| 3     | `03-first-boot.md`         | Primeiro boot, usuário, SSH e hardening básico   |
+| 4     | `04-vscode-remote.md`      | Conecta o VS Code na VM via Remote SSH           |
 
 ---
 
@@ -71,7 +71,7 @@ Rede 2:   Host-Only    → IP fixo para SSH e acesso às apps
 Execute nesta ordem — cada etapa depende da anterior:
 
 ```
-01-virtualbox.md
+00-setup-virtualbox.md
       ↓
 02-ubuntu-server.md
       ↓
@@ -98,16 +98,16 @@ Execute nesta ordem — cada etapa depende da anterior:
 
 ## 🆘 Problemas comuns
 
-| Problema                              | Solução                                              |
-|---------------------------------------|------------------------------------------------------|
-| VirtualBox não abre / erro de kernel  | Habilitar VT-x/AMD-V na BIOS                         |
-| VM não consegue acessar internet      | Verificar adaptador NAT nas configurações da VM      |
-| SSH: `Connection refused`             | Verificar se o serviço SSH está rodando na VM        |
+| Problema                              | Solução                                               |
+|---------------------------------------|-------------------------------------------------------|
+| VirtualBox não abre / erro de kernel  | Habilitar VT-x/AMD-V na BIOS                          |
+| VM não consegue acessar internet      | Verificar adaptador NAT nas configurações da VM       |
+| SSH: `Connection refused`             | Verificar se o serviço SSH está rodando na VM         |
 | VS Code não conecta                   | Conferir IP da VM com `ip a` e checar `~/.ssh/config` |
-| Tela preta ao iniciar a VM            | Aumentar memória de vídeo nas configurações da VM    |
+| Tela preta ao iniciar a VM            | Aumentar memória de vídeo nas configurações da VM     |
 
 ---
 
 ## ➡️ Começar
 
-👉 Abra `01-virtualbox.md`
+👉 Abra `00-setup-virtualbox.md`
